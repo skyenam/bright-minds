@@ -5,6 +5,8 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
+rooms = {}
+
 @app.route("/")
 def home():
     return render_template("index.html")
@@ -24,9 +26,16 @@ def end():
 @socketio.on('join')
 def on_join(data):
     room = data['room']
+    username = data.get('username')
     join_room(room)
-    print(f"User joined room: {room}")
-    emit('user_joined', {'msg': 'A new player has joined!'}, room=room)
+    
+    if room not in rooms:
+        rooms[room] = []
+    
+    if username and username not in rooms[room]:
+        rooms[room].append(username)
+    
+    emit('update_player_list', rooms[room], room=room)
 
 @socketio.on('start_game')
 def on_start(data):

@@ -5,6 +5,12 @@ const scoreText = document.getElementById('score');
 const progressBarFull = document.getElementById('progressBarFull');
 const loader = document.getElementById('loader');
 const game = document.getElementById('game');
+const lobby = document.getElementById('lobby');
+const lobbyRoomCode = document.getElementById('lobbyRoomCode');
+const playerList = document.getElementById('playerList');
+const startGameBtn = document.getElementById('startGameBtn');
+const waitingMessage = document.getElementById('waitingMessage');
+const qrcodeContainer = document.getElementById('qrcode');
 let currentQuestion = {};
 let acceptingAnswers = false;
 let score = 0;
@@ -20,26 +26,53 @@ const isHost = urlParams.get('host');
 
 if (roomCode) {
     // --- MULTIPLAYER LOGIC ---
-    const socket = io();
-    console.log("Joining room:", roomCode);
-    
-    // Join the room
-    socket.emit('join', { room: roomCode });
+    loader.classList.add('hidden');
+    lobby.classList.remove('hidden');
+    lobbyRoomCode.innerText = `Room Code: ${roomCode}`;
 
+    const socket = io();
+    let username = localStorage.getItem('username');
+    
     if (isHost) {
-        // If Host: Fetch questions and send to server
+        username = "Host";
+        startGameBtn.classList.remove('hidden');
+
+        // Generate QR Code
+        // The URL should be the current URL without the '&host=true' part
+        const joinUrl = window.location.href.split('&host=true')[0];
+        new QRCode(qrcodeContainer, {
+            text: joinUrl,
+            width: 128,
+            height: 128
+        });
+
+        // If Host: Fetch questions and wait for start click
         fetchQuestions().then((loadedQuestions) => {
-            console.log("Host starting game...");
-            socket.emit('start_game', { room: roomCode, questions: loadedQuestions });
+            questions = loadedQuestions;
+            startGameBtn.addEventListener('click', () => {
+                socket.emit('start_game', { room: roomCode, questions: questions });
+            });
         });
     } else {
-        // If Joiner: Show waiting message
-        progressText.innerText = "Waiting for host...";
+        // If Joiner: Prompt for name if not saved
+        if (!username) {
+            username = prompt("Enter your name to join:");
+            if (username) localStorage.setItem('username', username);
+        }
+        waitingMessage.classList.remove('hidden');
     }
+
+    // Join the room
+    socket.emit('join', { room: roomCode, username: username || 'Guest' });
+
+    // Listen for player updates
+    socket.on('update_player_list', (players) => {
+        playerList.innerHTML = players.map(p => `<li>${p}</li>`).join('');
+    });
 
     // Listen for game start
     socket.on('start_game', (data) => {
-        console.log("Game starting with questions:", data.questions);
+        lobby.classList.add('hidden');
         questions = data.questions;
         startGame();
     });

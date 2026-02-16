@@ -11,6 +11,15 @@
   <body>
     <div class="container">
       <div id="loader"></div>
+      <div id="lobby" class="flex-center flex-column hidden">
+        <h2>Waiting for Players...</h2>
+        <h2 id="lobbyRoomCode"></h2>
+        <div id="qrcode" style="margin: 2rem 0;"></div>
+        <h3>Players Joined:</h3>
+        <ul id="playerList" style="list-style: none; font-size: 2rem; margin-bottom: 2rem; text-align: center;"></ul>
+        <button id="startGameBtn" class="btn hidden">Start Game</button>
+        <h3 id="waitingMessage" class="hidden">Waiting for host to start...</h3>
+      </div>
       <div id="game" class="justify-center flex-column hidden">
         <div id="hud">
           <div id="hud-item">
@@ -50,6 +59,7 @@
       </div>
     </div>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
     <script src="{{ url_for('static', filename='game.js') }}"></script>
   </body>
 </html>
