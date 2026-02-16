@@ -1,2 +1,7 @@
+[project]
+name = "bright-minds"
+version = "1.0.0"
+dependencies = ["flask", "gunicorn"]
+
 [project.scripts]
 app = "app:app"
