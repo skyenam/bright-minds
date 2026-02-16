@@ -13,7 +13,30 @@
         <h1>Quick Quiz</h1>
         <a class="btn" href="{{ url_for('game') }}">Play</a>
         <a class="btn" href="{{ url_for('highscores') }}">High Scores</a>
+        
+        <h2 style="margin-top: 2rem;">Multiplayer</h2>
+        <input type="text" id="roomCode" placeholder="Enter Room Code" style="padding: 1rem; margin-bottom: 1rem; width: 20rem;" />
+        <button class="btn" onclick="joinGame()">Join Game</button>
+        <button class="btn" onclick="createGame()">Create Game</button>
       </div>
     </div>
+    <script>
+      function createGame() {
+        // Generate a random 5-character code
+        const code = Math.random().toString(36).substring(2, 7).toUpperCase();
+        // Redirect to game with room code and host flag
+        window.location.href = `{{ url_for('game') }}?room=${code}&host=true`;
+      }
+
+      function joinGame() {
+        const code = document.getElementById('roomCode').value;
+        if (code) {
+          // Redirect to game with room code
+          window.location.href = `{{ url_for('game') }}?room=${code}`;
+        } else {
+          alert("Please enter a room code!");
+        }
+      }
+    </script>
   </body>
 </html>

@@ -13,38 +13,76 @@ let availableQuesions = [];
 
 let questions = [];
 
-fetch(
-    'https://opentdb.com/api.php?amount=10&category=9&difficulty=easy&type=multiple'
-)
-    .then((res) => {
-        return res.json();
-    })
-    .then((loadedQuestions) => {
-        questions = loadedQuestions.results.map((loadedQuestion) => {
-            const formattedQuestion = {
-                question: loadedQuestion.question,
-            };
+// Check for URL parameters (Multiplayer)
+const urlParams = new URLSearchParams(window.location.search);
+const roomCode = urlParams.get('room');
+const isHost = urlParams.get('host');
 
-            const answerChoices = [...loadedQuestion.incorrect_answers];
-            formattedQuestion.answer = Math.floor(Math.random() * 4) + 1;
-            answerChoices.splice(
-                formattedQuestion.answer - 1,
-                0,
-                loadedQuestion.correct_answer
-            );
+if (roomCode) {
+    // --- MULTIPLAYER LOGIC ---
+    const socket = io();
+    console.log("Joining room:", roomCode);
+    
+    // Join the room
+    socket.emit('join', { room: roomCode });
 
-            answerChoices.forEach((choice, index) => {
-                formattedQuestion['choice' + (index + 1)] = choice;
-            });
-
-            return formattedQuestion;
+    if (isHost) {
+        // If Host: Fetch questions and send to server
+        fetchQuestions().then((loadedQuestions) => {
+            console.log("Host starting game...");
+            socket.emit('start_game', { room: roomCode, questions: loadedQuestions });
         });
+    } else {
+        // If Joiner: Show waiting message
+        progressText.innerText = "Waiting for host...";
+    }
 
+    // Listen for game start
+    socket.on('start_game', (data) => {
+        console.log("Game starting with questions:", data.questions);
+        questions = data.questions;
         startGame();
-    })
-    .catch((err) => {
-        console.error(err);
     });
+
+} else {
+    // --- SINGLE PLAYER LOGIC ---
+    fetchQuestions().then((loadedQuestions) => {
+        questions = loadedQuestions;
+        startGame();
+    });
+}
+
+// Helper function to fetch and format questions
+function fetchQuestions() {
+    return fetch(
+        'https://opentdb.com/api.php?amount=10&category=9&difficulty=easy&type=multiple'
+    )
+        .then((res) => {
+            return res.json();
+        })
+        .then((loadedQuestions) => {
+            return loadedQuestions.results.map((loadedQuestion) => {
+                const formattedQuestion = {
+                    question: loadedQuestion.question,
+                };
+
+                const answerChoices = [...loadedQuestion.incorrect_answers];
+                formattedQuestion.answer = Math.floor(Math.random() * 4) + 1;
+                answerChoices.splice(
+                    formattedQuestion.answer - 1,
+                    0,
+                    loadedQuestion.correct_answer
+                );
+
+                answerChoices.forEach((choice, index) => {
+                    formattedQuestion['choice' + (index + 1)] = choice;
+                });
+
+                return formattedQuestion;
+            });
+        })
+        .catch((err) => console.error(err));
+}
 
 //CONSTANTS
 const CORRECT_BONUS = 10;
