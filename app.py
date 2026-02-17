@@ -6,6 +6,7 @@ app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 rooms = {}
+room_scores = {}
 
 @app.route("/")
 def home():
@@ -41,5 +42,27 @@ def on_join(data):
 def on_start(data):
     room = data['room']
     questions = data['questions']
+    
+    # Reset scores for the new game
+    room_scores[room] = []
+    
     # Broadcast the questions to everyone in the room so they play the same game
     emit('start_game', {'questions': questions}, room=room)
+
+@socketio.on('submit_score')
+def on_submit_score(data):
+    room = data['room']
+    username = data['username']
+    score = data['score']
+    
+    if room not in room_scores:
+        room_scores[room] = []
+    
+    # Add score (filter out previous score from same user if needed, or just append)
+    room_scores[room] = [s for s in room_scores[room] if s['username'] != username]
+    room_scores[room].append({'username': username, 'score': score})
+    
+    # Sort by score descending
+    room_scores[room].sort(key=lambda x: x['score'], reverse=True)
+    
+    emit('update_leaderboard', room_scores[room], room=room)

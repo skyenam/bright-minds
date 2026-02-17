@@ -11,6 +11,9 @@ const playerList = document.getElementById('playerList');
 const startGameBtn = document.getElementById('startGameBtn');
 const waitingMessage = document.getElementById('waitingMessage');
 const qrcodeContainer = document.getElementById('qrcode');
+const endScreen = document.getElementById('endScreen');
+const finalScoreText = document.getElementById('finalScoreText');
+const finalLeaderboard = document.getElementById('finalLeaderboard');
 let currentQuestion = {};
 let acceptingAnswers = false;
 let score = 0;
@@ -18,6 +21,7 @@ let questionCounter = 0;
 let availableQuesions = [];
 
 let questions = [];
+let socket;
 
 // Check for URL parameters (Multiplayer)
 const urlParams = new URLSearchParams(window.location.search);
@@ -31,7 +35,7 @@ if (roomCode) {
     lobby.classList.remove('hidden');
     lobbyRoomCode.innerText = `Room Code: ${roomCode}`;
 
-    const socket = io();
+    socket = io();
     let username = localStorage.getItem('username');
     
     if (isHost) {
@@ -77,6 +81,13 @@ if (roomCode) {
         lobby.classList.add('hidden');
         questions = data.questions;
         startGame();
+    });
+
+    // Listen for leaderboard updates
+    socket.on('update_leaderboard', (leaderboard) => {
+        finalLeaderboard.innerHTML = leaderboard
+            .map(p => `<li>${p.username}: ${p.score}</li>`)
+            .join('');
     });
 
     // Join the room
@@ -138,8 +149,22 @@ startGame = () => {
 getNewQuestion = () => {
     if (availableQuesions.length === 0 || questionCounter >= MAX_QUESTIONS) {
         localStorage.setItem('mostRecentScore', score);
-        //go to the end page
-        return window.location.assign('/end');
+        
+        if (roomCode) {
+            game.classList.add('hidden');
+            endScreen.classList.remove('hidden');
+            finalScoreText.innerText = `Your Score: ${score}`;
+            
+            socket.emit('submit_score', {
+                room: roomCode,
+                username: localStorage.getItem('username') || 'Guest',
+                score: score
+            });
+        } else {
+            //go to the end page (Single Player)
+            return window.location.assign('/end');
+        }
+        return;
     }
     questionCounter++;
     progressText.innerText = `Question ${questionCounter}/${MAX_QUESTIONS}`;
