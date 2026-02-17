@@ -29,7 +29,7 @@
       }
 
       function joinGame() {
-        const code = document.getElementById('roomCode').value;
+        const code = document.getElementById('roomCode').value.toUpperCase().trim();
         if (code) {
           // Redirect to game with room code
           window.location.href = `{{ url_for('game') }}?room=${code}`;

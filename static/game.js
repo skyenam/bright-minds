@@ -21,7 +21,8 @@ let questions = [];
 
 // Check for URL parameters (Multiplayer)
 const urlParams = new URLSearchParams(window.location.search);
-const roomCode = urlParams.get('room');
+const rawRoomCode = urlParams.get('room');
+const roomCode = rawRoomCode ? rawRoomCode.toUpperCase() : null;
 const isHost = urlParams.get('host');
 
 if (roomCode) {
@@ -72,6 +73,7 @@ if (roomCode) {
 
     // Listen for game start
     socket.on('start_game', (data) => {
+        console.log("Game started! Questions received:", data.questions);
         lobby.classList.add('hidden');
         questions = data.questions;
         startGame();
