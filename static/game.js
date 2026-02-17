@@ -38,12 +38,15 @@ if (roomCode) {
         startGameBtn.classList.remove('hidden');
 
         // Generate QR Code
-        // The URL should be the current URL without the '&host=true' part
-        const joinUrl = window.location.href.split('&host=true')[0];
+        // The URL should be the current URL without the 'host' parameter
+        const url = new URL(window.location.href);
+        url.searchParams.delete('host');
+        const joinUrl = url.toString();
+        
         new QRCode(qrcodeContainer, {
             text: joinUrl,
-            width: 128,
-            height: 128
+            width: 256,
+            height: 256
         });
 
         // If Host: Fetch questions and wait for start click
@@ -54,11 +57,11 @@ if (roomCode) {
             });
         });
     } else {
-        // If Joiner: Prompt for name if not saved
-        if (!username) {
-            username = prompt("Enter your name to join:");
-            if (username) localStorage.setItem('username', username);
-        }
+        // If Joiner: Always prompt for name
+        username = prompt("Enter your name to join:", username || "");
+        if (!username) username = "Guest";
+        localStorage.setItem('username', username);
+        
         waitingMessage.classList.remove('hidden');
     }
 
