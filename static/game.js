@@ -65,9 +65,6 @@ if (roomCode) {
         waitingMessage.classList.remove('hidden');
     }
 
-    // Join the room
-    socket.emit('join', { room: roomCode, username: username || 'Guest' });
-
     // Listen for player updates
     socket.on('update_player_list', (players) => {
         playerList.innerHTML = players.map(p => `<li>${p}</li>`).join('');
@@ -79,6 +76,9 @@ if (roomCode) {
         questions = data.questions;
         startGame();
     });
+
+    // Join the room
+    socket.emit('join', { room: roomCode, username: username || 'Guest' });
 
 } else {
     // --- SINGLE PLAYER LOGIC ---
@@ -144,7 +144,7 @@ getNewQuestion = () => {
     //Update the progress bar
     progressBarFull.style.width = `${(questionCounter / MAX_QUESTIONS) * 100}%`;
 
-    const questionIndex = Math.floor(Math.random() * availableQuesions.length);
+    const questionIndex = 0;
     currentQuestion = availableQuesions[questionIndex];
     question.innerHTML = currentQuestion.question;
 
